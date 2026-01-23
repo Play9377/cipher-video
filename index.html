@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>TERMINAL - DECRYPTING DATA</title>
+    <style>
+        :root { --hacker-green: #00ff41; --glow: 0 0 10px rgba(0, 255, 65, 0.8); }
+        body, html { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+        
+        /* 矩阵背景 */
+        #matrix-bg { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.3; }
+
+        /* 登录终端容器 */
+        #auth-terminal {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 400px; padding: 20px; border: 1px solid var(--hacker-green);
+            background: rgba(0, 5, 0, 0.9); box-shadow: var(--glow);
+            text-align: left; z-index: 100;
+        }
+
+        .scanline {
+            width: 100%; height: 100px; z-index: 101; background: linear-gradient(0deg, rgba(0, 255, 65, 0.1) 0%, transparent 100%);
+            position: absolute; top: 0; pointer-events: none; animation: scan 4s linear infinite;
+        }
+
+        .cursor { display: inline-block; width: 10px; height: 20px; background: var(--hacker-green); animation: blink 1s infinite; }
+
+        input {
+            background: transparent; border: none; border-bottom: 2px solid var(--hacker-green);
+            color: var(--hacker-green); width: 100%; font-size: 20px; margin-top: 20px; outline: none;
+            letter-spacing: 5px; text-shadow: var(--glow);
+        }
+
+        /* 播放器容器 */
+        #main-frame {
+            display: none; width: 90vw; height: 80vh; margin: 5vh auto;
+            border: 1px solid var(--hacker-green); position: relative; background: #000;
+        }
+
+        video { width: 100%; height: 100%; object-fit: contain; }
+
+        @keyframes scan { from { top: -100px; } to { top: 100%; } }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .glitch-text { animation: glitch 1s infinite; }
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false" onkeydown="return disableSecurityKeys(event)">
+
+<canvas id="matrix-bg"></canvas>
+<div class="scanline"></div>
+
+<!-- 登录界面 -->
+<div id="auth-terminal">
+    <div id="typewriter" class="glitch-text" style="color: var(--hacker-green); font-weight: bold;"></div>
+    <div style="margin-top:10px; font-size: 12px; color: #008f11;">STATUS: WAITING_FOR_KEY...</div>
+    <input type="password" id="access-key" maxlength="6" autofocus>
+    <div id="error-alert" style="color: #ff0000; margin-top: 10px; font-size: 12px; display: none;">[ERROR: ACCESS_DENIED]</div>
+</div>
+
+<!-- 播放器界面 -->
+<div id="main-frame">
+    <div style="position:absolute; top:-25px; left:0; color:var(--hacker-green); font-size:12px;">
+        ENCRYPTED_STREAM_ID: 0x865744 // PROTOCOL: NON_DOWNLOADABLE
+    </div>
+    <video id="hacker-player" controlslist="nodownload" oncontextmenu="return false;" disablePictureInPicture>
+        <!-- 视频源在验证后动态注入 -->
+    </video>
+</div>
+
+<script>
+    // 1. 矩阵背景逻辑
+    const canvas = document.getElementById('matrix-bg');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const chars = "0123456789ABCDEFHIJKLMNOPQRSTUVWXYZ$#@&%";
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+
+    function drawMatrix() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#00ff41';
+        ctx.font = fontSize + 'px monospace';
+        drops.forEach((y, i) => {
+            const text = chars[Math.floor(Math.random() * chars.length)];
+            ctx.fillText(text, i * fontSize, y * fontSize);
+            if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        });
+    }
+    setInterval(drawMatrix, 35);
+
+    // 2. 打字机效果
+    const text = "> 系统已锁定。请输入 6 位解密密钥以加载核心数据流...";
+    let i = 0;
+    function typeWriter() {
+        if (i < text.length) {
+            document.getElementById("typewriter").innerHTML += text.charAt(i);
+            i++;
+            setTimeout(typeWriter, 50);
+        }
+    }
+    typeWriter();
+
+    // 3. 验证逻辑
+    const input = document.getElementById('access-key');
+    input.addEventListener('input', () => {
+        if (input.value === "865744") {
+            document.getElementById('auth-terminal').style.display = 'none';
+            document.getElementById('main-frame').style.display = 'block';
+            
+            const player = document.getElementById('hacker-player');
+            player.src = "right.mp4"; // 验证成功后再加载资源
+            player.controls = true;
+            player.play();
+        } else if (input.value.length === 6) {
+            document.getElementById('error-alert').style.display = 'block';
+            input.value = "";
+            setTimeout(() => { document.getElementById('error-alert').style.display = 'none'; }, 2000);
+        }
+    });
+
+    // 4. 安全防护：禁用常用开发者按键
+    function disableSecurityKeys(e) {
+        // 禁用 F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S
+        if (e.keyCode === 123 || 
+            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
+            (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83))) {
+            return false;
+        }
+    }
+</script>
+
+</body>
+</html>
