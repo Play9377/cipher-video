@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🔒 国家大数据中心</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent: #a855f7;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'PingFang SC', 'Inter', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        /* 玻璃拟态卡片 */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 440px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .video-active {
+            max-width: 850px;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        /* 渐变输入框 */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 4px;
+            transition: 0.3s;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        /* 炫彩按钮 */
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+
+        button:active { transform: scale(0.97); }
+
+        /* 视频容器美化 */
+        #video-container { display: none; opacity: 0; }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 禁止交互遮罩层 */
+        .guard-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: calc(100% - 60px);
+            z-index: 5;
+        }
+
+        video {
+            width: 100%;
+            display: block;
+        }
+
+        /* 错误提示动画 */
+        .shake { animation: shake 0.4s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .error-text {
+            color: #ef4444;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        /* 手机端适配 */
+        @media (max-width: 480px) {
+            .glass-card { padding: 30px 20px; }
+            h2 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="glass-card" id="main-card">
+        <!-- 登录界面 -->
+        <div id="login-box">
+            <div style="font-size: 48px; margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(99,102,241,0.5));">💎</div>
+            <h2>身份验证</h2>
+            <p>请输入专属授权码以继续</p>
+            
+            <div class="input-group">
+                <input type="number" id="passInput" pattern="\d*" placeholder="••••••" onkeydown="if(event.keyCode==13) checkPass()">
+            </div>
+            
+            <button onclick="checkPass()">进入空间</button>
+            <div id="errorHint" class="error-text">授权码无效，请检查后重新输入</div>
+        </div>
+
+        <!-- 播放界面 -->
+        <div id="video-container">
+            <h2 style="font-size: 18px; margin-bottom: 15px; color: #a855f7;">🔒 加密传输已就绪</h2>
+            <div class="video-wrapper">
+                <div class="guard-layer"></div>
+                <video id="player" 
+                       playsinline 
+                       webkit-playsinline 
+                       controls 
+                       controlsList="nodownload noremoteplayback" 
+                       disablePictureInPicture>
+                    <!-- 将此处地址更换为您的视频 URL -->
+                    <source src="right.mp4" type="video/mp4">
+                </video>
+            </div>
+            <p style="margin: 15px 0 0 0; font-size: 11px; opacity: 0.5;">2026 端到端加密流媒体协议</p>
+        </div>
+    </div>
+
+    <script>
+        function checkPass() {
+            const input = document.getElementById('passInput');
+            const card = document.getElementById('main-card');
+            const error = document.getElementById('errorHint');
+            
+            // 您的专属密码：865744
+            if (input.value === "865744") {
+                // 成功特效
+                card.style.opacity = "0";
+                setTimeout(() => {
+                    document.getElementById('login-box').style.display = 'none';
+                    document.getElementById('video-container').style.display = 'block';
+                    card.classList.add('video-active');
+                    card.style.opacity = "1";
+                    document.getElementById('video-container').style.opacity = "1";
+                    
+                    const player = document.getElementById('player');
+                    player.play().catch(() => { /* 捕获自动播放限制 */ });
+                    
+                    startProtection();
+                }, 400);
+            } else {
+                // 失败特效
+                card.classList.add('shake');
+                error.style.display = 'block';
+                input.value = "";
+                setTimeout(() => card.classList.remove('shake'), 400);
+            }
+        }
+
+        function startProtection() {
+            // 禁止右键
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            
+            // 禁止 PC 端调试按键
+            document.onkeydown = (e) => {
+                if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73) || (e.ctrlKey && e.keyCode == 85)) {
+                    return false;
+                }
+            };
+
+            // 移动端防截屏/录屏提示逻辑 (仅能在受限环境下尝试)
+            console.log("2026 版权防护已激活");
+        }
+
+        // 自动聚焦输入框
+        window.onload = () => document.getElementById('passInput').focus();
+    </script>
+</body>
+</html>
