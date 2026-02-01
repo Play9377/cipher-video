@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🔒 中国网络安全后台</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --accent: #a855f7;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'PingFang SC', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        /* 协议弹窗 */
+        #protocol-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .protocol-card {
+            background: #1e293b;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            color: #e2e8f0;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .protocol-content {
+            height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #94a3b8;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .protocol-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        /* 主体卡片 */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 440px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: none; /* 初始隐藏，等协议通过 */
+        }
+
+        .video-active { max-width: 850px; padding: 20px; }
+
+        h2 { color: #fff; font-size: 22px; margin-bottom: 10px; }
+        
+        input[type="number"] {
+            width: 100%; padding: 16px; background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border); border-radius: 14px;
+            color: #fff; font-size: 20px; text-align: center; letter-spacing: 4px;
+            outline: none; margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%; padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none; border-radius: 14px; color: white;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        #video-container { display: none; }
+        .video-wrapper { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; }
+        .guard-layer { position: absolute; top: 0; left: 0; width: 100%; height: calc(100% - 60px); z-index: 5; }
+        video { width: 100%; display: block; }
+        
+        .error-text { color: #ef4444; font-size: 13px; margin-top: 12px; display: none; }
+        .shake { animation: shake 0.4s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <!-- 1. 协议对话框 -->
+    <div id="protocol-overlay">
+        <div class="protocol-card">
+            <h3 style="color: #fff; text-align: center;">互联网安全协议</h3>
+            <div class="protocol-content">
+                <strong>尊敬的用户：</strong><br><br>
+                在您访问本加密媒体库之前，请仔细阅读以下条款：<br>
+                1. <strong>版权声明</strong>：本站所有视频内容仅供授权个人观看，严禁任何形式的录屏、下载或二次分发。<br>
+                2. <strong>法律合规</strong>：用户需严格遵守《2026年互联网内容安全管理条例》，不得利用本平台传播违法违规信息。<br>
+                3. <strong>安全责任</strong>：授权码（865744）仅限本人使用，因泄露导致的账号安全问题由用户自行承担。<br>
+                4. <strong>行为监测</strong>：为防止盗链，系统将对非法下载行为进行实时监测并可能自动封禁访问 IP。<br><br>
+                点击“同意并继续”即表示您已阅读并自愿遵守上述协议。
+            </div>
+            <label class="protocol-check">
+                <input type="checkbox" id="agreeCheck" onchange="toggleProtocolBtn()"> 我已阅读并同意上述安全协议
+            </label>
+            <button id="protocolBtn" disabled onclick="acceptProtocol()">同意并继续</button>
+        </div>
+    </div>
+
+    <!-- 2. 主卡片（密码输入） -->
+    <div class="glass-card" id="main-card">
+        <div id="login-box">
+            <div style="font-size: 40px; margin-bottom: 15px;">🔐</div>
+            <h2>身份验证</h2>
+            <p style="color:#94a3b8; font-size:14px; margin-bottom:25px;">请输入您的专属授权码</p>
+            <input type="number" id="passInput" pattern="\d*" placeholder="••••••" onkeydown="if(event.keyCode==13) checkPass()">
+            <button onclick="checkPass()">验证授权</button>
+            <div id="errorHint" class="error-text">授权码校验失败，请重试</div>
+        </div>
+
+        <!-- 3. 视频播放器 -->
+        <div id="video-container">
+            <h2 style="font-size: 18px; color: #a855f7;">已进入安全加密隧道</h2>
+            <div class="video-wrapper">
+                <div class="guard-layer"></div>
+                <video id="player" playsinline webkit-playsinline controls controlsList="nodownload" disablePictureInPicture>
+                    <source src="right.mp4" type="video/mp4">
+                </video>
+            </div>
+            <p style="margin-top:15px; font-size:11px; opacity:0.4;">Secure Stream v2.6 | 无痕浏览模式</p>
+        </div>
+    </div>
+
+    <script>
+        // 协议逻辑
+        function toggleProtocolBtn() {
+            document.getElementById('protocolBtn').disabled = !document.getElementById('agreeCheck').checked;
+        }
+
+        function acceptProtocol() {
+            document.getElementById('protocol-overlay').style.display = 'none';
+            document.getElementById('main-card').style.display = 'block';
+            document.getElementById('passInput').focus();
+        }
+
+        // 密码逻辑 (密码：865744)
+        function checkPass() {
+            const input = document.getElementById('passInput');
+            const card = document.getElementById('main-card');
+            const error = document.getElementById('errorHint');
+            
+            if (input.value === "865744") {
+                card.style.opacity = "0";
+                setTimeout(() => {
+                    document.getElementById('login-box').style.display = 'none';
+                    document.getElementById('video-container').style.display = 'block';
+                    card.classList.add('video-active');
+                    card.style.opacity = "1";
+                    const player = document.getElementById('player');
+                    player.play().catch(() => {});
+                    startProtection();
+                }, 400);
+            } else {
+                card.classList.add('shake');
+                error.style.display = 'block';
+                input.value = "";
+                setTimeout(() => card.classList.remove('shake'), 400);
+            }
+        }
+
+        function startProtection() {
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            document.onkeydown = (e) => {
+                if (e.keyCode == 123 || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 83))) return false;
+            };
+        }
+    </script>
+</body>
+</html>
